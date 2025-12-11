@@ -1,0 +1,117 @@
+/* Позадина со грб на општина */
+body {
+  margin: 0;
+  padding: 0;
+  min-height: 100vh;
+  font-family: Arial, sans-serif;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background-image: url("grb-opshtina.png"); /* промени име ако е друго */
+  background-size: cover;
+  background-position: center;
+  background-repeat: no-repeat;
+}
+
+/* Централен модул */
+.app-container {
+  background-color: rgba(255, 255, 255, 0.93);
+  padding: 20px 30px;
+  border-radius: 12px;
+  max-width: 900px;
+  width: 95%;
+  box-shadow: 0 4px 20px rgba(0, 0, 0, 0.2);
+}
+
+h1, h2, h3 {
+  text-align: center;
+  margin-top: 0;
+}
+
+textarea, input, select {
+  width: 100%;
+  padding: 8px;
+  box-sizing: border-box;
+  margin-top: 5px;
+  margin-bottom: 10px;
+}
+
+button {
+  padding: 8px 16px;
+  font-size: 16px;
+  cursor: pointer;
+  border-radius: 6px;
+  border: none;
+}
+
+button:disabled {
+  opacity: 0.5;
+  cursor: not-allowed;
+}
+
+.hidden {
+  display: none;
+}
+
+.hint {
+  font-size: 13px;
+  color: #555;
+  text-align: left;
+}
+
+/* Точки */
+.agenda-title {
+  font-size: 18px;
+  font-weight: bold;
+  margin: 10px 0 15px 0;
+  text-align: center;
+}
+
+/* Кутија за логирање на советник */
+.login-box {
+  border: 1px solid #ccc;
+  border-radius: 10px;
+  padding: 12px 15px;
+  background-color: #f9f9f9;
+  margin-bottom: 15px;
+}
+
+.logged-info {
+  margin-top: 5px;
+  font-size: 14px;
+  color: #006600;
+}
+
+/* Копчиња за гласање */
+.vote-buttons.single {
+  display: flex;
+  justify-content: center;
+  gap: 10px;
+}
+
+.vote-buttons.single button {
+  min-width: 100px;
+}
+
+/* Резиме за тековна точка */
+.current-summary {
+  margin-top: 10px;
+  text-align: center;
+}
+
+/* Табела за конечни резултати */
+#resultsTable {
+  width: 100%;
+  border-collapse: collapse;
+}
+
+#resultsTable th,
+#resultsTable td {
+  border: 1px solid #ccc;
+  padding: 6px 8px;
+  text-align: center;
+}
+
+#resultsTable th {
+  background-color: #f0f0f0;
+}

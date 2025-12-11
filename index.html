@@ -1,0 +1,103 @@
+<!DOCTYPE html>
+<html lang="mk">
+<head>
+  <meta charset="UTF-8">
+  <title>Систем за гласање на Совет</title>
+  <link rel="stylesheet" href="style.css">
+</head>
+<body>
+  <div class="app-container">
+
+    <h1>Систем за гласање на Совет</h1>
+
+    <!-- 1. АДМИН ЛОГИН -->
+    <section id="admin-login-section">
+      <h2>Админ најава</h2>
+      <p>Внеси админ шифра за да ги внесеш точките од дневен ред.</p>
+
+      <input type="password" id="adminPassword" placeholder="Админ шифра">
+      <button id="adminLoginBtn">Најави се како админ</button>
+
+      <p class="hint">
+        *За тест: основна админ шифра е <strong>admin123</strong>  
+        (можеш да ја смениш во <code>script.js</code>).
+      </p>
+    </section>
+
+    <!-- 2. ВНЕС НА ТОЧКИ -->
+    <section id="setup-section" class="hidden">
+      <h2>Внес на точки (дневен ред)</h2>
+      <p>Внеси ги точките, секоја во посебен ред:</p>
+
+      <textarea id="agendaInput" rows="7"></textarea>
+
+      <button id="startBtn">Започни гласање</button>
+    </section>
+
+    <!-- 3. ГЛАСАЊЕ -->
+    <section id="voting-section" class="hidden">
+      <h2>Гласање по точки</h2>
+
+      <div id="currentAgendaTitle" class="agenda-title"></div>
+
+      <div class="login-box">
+        <h3>Најава на советник</h3>
+
+        <label>Советник:</label>
+        <select id="councilorSelect">
+          <option value="">-- Одбери советник --</option>
+        </select>
+
+        <label>Шифра:</label>
+        <input type="password" id="councilorPassword" placeholder="Шифра">
+
+        <button id="councilorLoginBtn">Најави се</button>
+
+        <p id="loggedCouncilorInfo" class="logged-info"></p>
+      </div>
+
+      <div id="voteArea" class="hidden">
+        <h3>Глас за тековната точка</h3>
+        <div class="vote-buttons single">
+          <button id="btnZa">За</button>
+          <button id="btnProtiv">Против</button>
+          <button id="btnVozdrzan">Воздржан</button>
+        </div>
+      </div>
+
+      <div class="current-summary">
+        <p><strong>Вкупно гласале:</strong> <span id="currentTotalVotes">0</span> / 15</p>
+        <p>
+          <strong>За:</strong> <span id="currentZa">0</span> |
+          <strong>Против:</strong> <span id="currentProtiv">0</span> |
+          <strong>Воздржани:</strong> <span id="currentVozdrzani">0</span>
+        </p>
+      </div>
+
+      <button id="nextBtn" disabled>Следна точка</button>
+    </section>
+
+    <!-- 4. РЕЗУЛТАТИ -->
+    <section id="results-section" class="hidden">
+      <h2>Резултати од гласањето</h2>
+
+      <table id="resultsTable">
+        <thead>
+          <tr>
+            <th>Точка</th>
+            <th>Гласале</th>
+            <th>За</th>
+            <th>Против</th>
+            <th>Воздржани</th>
+          </tr>
+        </thead>
+        <tbody></tbody>
+      </table>
+    </section>
+
+  </div>
+
+  <!-- ОБАВЕЗНО! -->
+  <script src="script.js"></script>
+</body>
+</html>
