@@ -114,6 +114,9 @@ adminLoginBtn.addEventListener("click", () => {
 });
 
 // === ЗАПОЧНУВАЊЕ НА ГЛАСАЊЕ ===
+// Save to localStorage so voting mode can load it
+localStorage.setItem("agendaItems", JSON.stringify(agendaItems));
+localStorage.setItem("allVotes", JSON.stringify(allVotes));
 
 startBtn.addEventListener("click", () => {
   const rawText = agendaInput.value.trim();
@@ -344,4 +347,5 @@ function fillResultsTable() {
     resultsTableBody.appendChild(row);
   });
 }
+
 
