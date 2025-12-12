@@ -41,6 +41,25 @@ const resultsSection = document.getElementById("results-section");
 // админ логин
 const adminPasswordInput = document.getElementById("adminPassword");
 const adminLoginBtn = document.getElementById("adminLoginBtn");
+// Ако mode = voting → прескокни админ дел и стартувај гласање
+if (mode === "voting") {
+    document.getElementById("admin-login-section").style.display = "none";
+    document.getElementById("setup-section").style.display = "none";
+
+    // Ако дневниот ред веќе е снимен (на пример во localStorage)
+    const savedAgenda = JSON.parse(localStorage.getItem("agendaItems"));
+    const savedVotes = JSON.parse(localStorage.getItem("allVotes"));
+
+    if (savedAgenda && savedVotes) {
+        agendaItems = savedAgenda;
+        allVotes = savedVotes;
+
+        document.getElementById("voting-section").classList.remove("hidden");
+        loadAgenda();
+    } else {
+        alert("Нема внесено дневен ред. Админот мора прво да ги внесе точките.");
+    }
+}
 
 // внес на точки
 const agendaInput = document.getElementById("agendaInput");
@@ -325,3 +344,4 @@ function fillResultsTable() {
     resultsTableBody.appendChild(row);
   });
 }
+
