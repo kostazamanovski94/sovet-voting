@@ -1,23 +1,28 @@
 "use strict";
 
-// =======================
-// КОНФИГУРАЦИЈА
-// =======================
+/*
+  СИСТЕМ ЗА ГЛАСАЊЕ НА СОВЕТ
+  - Админ логин (mode=admin)
+  - Внес на точки
+  - Гласање со 15 советници (име + шифра)
+  - Втор линк за советници: ?mode=voting (чита од localStorage)
+*/
 
-// Админ шифра
+// ---------------------- КОНФИГУРАЦИЈА ----------------------
+
 const ADMIN_PASSWORD = "admin123";
 
-// 15 советници со шифри
+// 15 советници, секој со своја шифра
 const COUNCILORS = [
-  { name: "Советник 1",  password: "1111" },
-  { name: "Советник 2",  password: "2222" },
-  { name: "Советник 3",  password: "3333" },
-  { name: "Советник 4",  password: "4444" },
-  { name: "Советник 5",  password: "5555" },
-  { name: "Советник 6",  password: "6666" },
-  { name: "Советник 7",  password: "7777" },
-  { name: "Советник 8",  password: "8888" },
-  { name: "Советник 9",  password: "9999" },
+  { name: "Советник 1", password: "1111" },
+  { name: "Советник 2", password: "2222" },
+  { name: "Советник 3", password: "3333" },
+  { name: "Советник 4", password: "4444" },
+  { name: "Советник 5", password: "5555" },
+  { name: "Советник 6", password: "6666" },
+  { name: "Советник 7", password: "7777" },
+  { name: "Советник 8", password: "8888" },
+  { name: "Советник 9", password: "9999" },
   { name: "Советник 10", password: "1010" },
   { name: "Советник 11", password: "1110" },
   { name: "Советник 12", password: "1212" },
@@ -26,27 +31,95 @@ const COUNCILORS = [
   { name: "Советник 15", password: "1515" }
 ];
 
-// минимум „ЗА“ за да биде усвоена точка
+// минимум 8 „ЗА“ за да биде усвоена точка
 const MAJORITY_ZA = 8;
 
-// LocalStorage клучеви
-const LS_KEY_AGENDA = "sovetVoting_agendaItems";
-const LS_KEY_VOTES  = "sovetVoting_allVotes";
-const LS_KEY_INDEX  = "sovetVoting_currentIndex";
+// localStorage клуч
+const STORAGE_KEY = "sovet_voting_state_v1";
 
-// состојба
+// структура што ја чуваме во storage:
+// {
+//   agendaItems: [ "т1", "т2", ... ],
+//   votes: [ { "0":"za", "3":"protiv" }, ... ],
+//   currentIndex: 0
+// }
+
+// ---------------------- ГЛОБАЛНА СОСТОЈБА ----------------------
+
 let agendaItems = [];
-let currentItemIndex = 0;
-let allVotes = [];                    // allVotes[i] = { indexNaSovetnik: "za/protiv/vozdrzan" }
-let currentLoggedCouncilorIndex = null;
+let votesPerItem = [];      // масив: за секоја точка -> објект { индексНаСоветник: "za/protiv/vozdrzan" }
+let currentIndex = 0;
+let loggedCouncilorIndex = null;
 
-// =======================
-// MAIN
-// =======================
+// ---------------------- ПОМОШНИ ФУНКЦИИ ----------------------
 
-document.addEventListener("DOMContentLoaded", function () {
+function saveStateToStorage() {
+  const state = {
+    agendaItems,
+    votes: votesPerItem,
+    currentIndex
+  };
+  try {
+    localStorage.setItem(STORAGE_KEY, JSON.stringify(state));
+  } catch (e) {
+    console.error("Не може да се сними состојбата:", e);
+  }
+}
 
-  // ---------- DOM ЕЛЕМЕНТИ ----------
+function loadStateFromStorage() {
+  try {
+    const raw = localStorage.getItem(STORAGE_KEY);
+    if (!raw) return false;
+    const state = JSON.parse(raw);
+    if (!state || !Array.isArray(state.agendaItems) || !Array.isArray(state.votes)) {
+      return false;
+    }
+    agendaItems = state.agendaItems;
+    votesPerItem = state.votes;
+    currentIndex = typeof state.currentIndex === "number" ? state.currentIndex : 0;
+
+    // безбедност
+    if (currentIndex < 0 || currentIndex >= agendaItems.length) {
+      currentIndex = 0;
+    }
+    return agendaItems.length > 0;
+  } catch (e) {
+    console.error("Не може да се прочита состојбата:", e);
+    return false;
+  }
+}
+
+function clearStateFromStorage() {
+  try {
+    localStorage.removeItem(STORAGE_KEY);
+  } catch (e) {
+    console.error("Не може да се избрише storage:", e);
+  }
+}
+
+// броење гласови за одредена точка
+function summarizeVotesForItem(index) {
+  const votesObj = votesPerItem[index] || {};
+  let za = 0;
+  let protiv = 0;
+  let vozdrzani = 0;
+
+  Object.values(votesObj).forEach((v) => {
+    if (v === "za") za++;
+    else if (v === "protiv") protiv++;
+    else if (v === "vozdrzan") vozdrzani++;
+  });
+
+  const total = za + protiv + vozdrzani;
+  const passed = za >= MAJORITY_ZA;
+
+  return { za, protiv, vozdrzani, total, passed };
+}
+
+// ---------------------- MAIN ----------------------
+
+document.addEventListener("DOMContentLoaded", () => {
+  // ---- HTML елементи ----
 
   const adminLoginSection = document.getElementById("admin-login-section");
   const setupSection      = document.getElementById("setup-section");
@@ -59,7 +132,8 @@ document.addEventListener("DOMContentLoaded", function () {
   const agendaInput = document.getElementById("agendaInput");
   const startBtn    = document.getElementById("startBtn");
 
-  const currentAgendaTitle     = document.getElementById("currentAgendaTitle");
+  const currentAgendaTitle = document.getElementById("currentAgendaTitle");
+
   const councilorSelect        = document.getElementById("councilorSelect");
   const councilorPasswordInput = document.getElementById("councilorPassword");
   const councilorLoginBtn      = document.getElementById("councilorLoginBtn");
@@ -79,37 +153,43 @@ document.addEventListener("DOMContentLoaded", function () {
   const liveResultsTableBody = document.querySelector("#liveResultsTable tbody");
   const resultsTableBody     = document.querySelector("#resultsTable tbody");
 
-  // ---------- ПОМОШНИ ----------
+  // ---- функции за прикажување секции ----
 
-  function hideAll() {
-    if (adminLoginSection) adminLoginSection.classList.add("hidden");
-    if (setupSection)      setupSection.classList.add("hidden");
-    if (votingSection)     votingSection.classList.add("hidden");
-    if (resultsSection)    resultsSection.classList.add("hidden");
+  function hideAllSections() {
+    [adminLoginSection, setupSection, votingSection, resultsSection].forEach((sec) => {
+      if (sec) sec.classList.add("hidden");
+    });
   }
 
-  function showAdminOnly() {
-    hideAll();
+  function showAdminLogin() {
+    hideAllSections();
     if (adminLoginSection) adminLoginSection.classList.remove("hidden");
   }
 
   function showSetup() {
-    hideAll();
+    hideAllSections();
     if (setupSection) setupSection.classList.remove("hidden");
   }
 
   function showVoting() {
-    hideAll();
+    hideAllSections();
     if (votingSection) votingSection.classList.remove("hidden");
   }
 
   function showResults() {
-    hideAll();
+    hideAllSections();
     if (resultsSection) resultsSection.classList.remove("hidden");
   }
 
-  function populateCouncilors() {
-    COUNCILORS.forEach(function (c, index) {
+  // ---- пополнување на листата на советници ----
+
+  function populateCouncilorsSelect() {
+    if (!councilorSelect) return;
+    // прво избриши евентуални стари опции (освен првата празна)
+    while (councilorSelect.options.length > 1) {
+      councilorSelect.remove(1);
+    }
+    COUNCILORS.forEach((c, index) => {
       const opt = document.createElement("option");
       opt.value = String(index);
       opt.textContent = c.name;
@@ -117,287 +197,229 @@ document.addEventListener("DOMContentLoaded", function () {
     });
   }
 
-  function saveState() {
-    try {
-      localStorage.setItem(LS_KEY_AGENDA, JSON.stringify(agendaItems));
-      localStorage.setItem(LS_KEY_VOTES,  JSON.stringify(allVotes));
-      localStorage.setItem(LS_KEY_INDEX,  String(currentItemIndex));
-    } catch (e) {
-      console.error("LocalStorage save error:", e);
+  // ---- ажурирање на UI за тековна точка ----
+
+  function updateCurrentPointUI() {
+    if (!agendaItems.length) return;
+    const title = agendaItems[currentIndex];
+    if (currentAgendaTitle) {
+      currentAgendaTitle.textContent = (currentIndex + 1) + ". " + title;
     }
-  }
 
-  function loadState() {
-    try {
-      const a = localStorage.getItem(LS_KEY_AGENDA);
-      const v = localStorage.getItem(LS_KEY_VOTES);
-      const i = localStorage.getItem(LS_KEY_INDEX);
+    // ресет на login на советник
+    loggedCouncilorIndex = null;
+    if (councilorSelect) councilorSelect.value = "";
+    if (councilorPasswordInput) councilorPasswordInput.value = "";
+    if (loggedCouncilorInfo) loggedCouncilorInfo.textContent = "";
+    if (voteArea) voteArea.classList.add("hidden");
 
-      if (!a || !v) return false;
+    // статистика за тековната точка
+    const sum = summarizeVotesForItem(currentIndex);
+    if (currentZaSpan) currentZaSpan.textContent = String(sum.za);
+    if (currentProtivSpan) currentProtivSpan.textContent = String(sum.protiv);
+    if (currentVozdrzaniSpan) currentVozdrzaniSpan.textContent = String(sum.vozdrzani);
+    if (currentTotalVotesSpan) currentTotalVotesSpan.textContent = String(sum.total);
 
-      const parsedAgenda = JSON.parse(a);
-      const parsedVotes  = JSON.parse(v);
+    if (nextBtn) nextBtn.disabled = sum.total === 0;
 
-      if (!Array.isArray(parsedAgenda) || !Array.isArray(parsedVotes)) return false;
-
-      agendaItems = parsedAgenda;
-      allVotes    = parsedVotes;
-
-      if (i !== null) {
-        const idx = parseInt(i, 10);
-        currentItemIndex = (!isNaN(idx) && idx >= 0 && idx < agendaItems.length) ? idx : 0;
-      } else {
-        currentItemIndex = 0;
-      }
-
-      return agendaItems.length > 0;
-    } catch (e) {
-      console.error("LocalStorage load error:", e);
-      return false;
-    }
-  }
-
-  function updateNextButtonState() {
-    const total = parseInt(currentTotalVotesSpan.textContent || "0", 10);
-    nextBtn.disabled = (total === 0);
-  }
-
-  function updateCurrentSummary() {
-    const votesForItem = allVotes[currentItemIndex] || {};
-    let za = 0;
-    let protiv = 0;
-    let vozdrzani = 0;
-
-    Object.values(votesForItem).forEach(function (vote) {
-      if (vote === "za") za++;
-      else if (vote === "protiv") protiv++;
-      else if (vote === "vozdrzan") vozdrzani++;
-    });
-
-    const total = za + protiv + vozdrzani;
-
-    currentZaSpan.textContent         = String(za);
-    currentProtivSpan.textContent     = String(protiv);
-    currentVozdrzaniSpan.textContent  = String(vozdrzani);
-    currentTotalVotesSpan.textContent = String(total);
-
-    updateNextButtonState();
-  }
-
-  function updateLiveResultsTable() {
-    if (!liveResultsTableBody) return;
-
-    liveResultsTableBody.innerHTML = "";
-
-    agendaItems.forEach(function (item, index) {
-      const votesForItem = allVotes[index] || {};
-      let za = 0;
-      let protiv = 0;
-      let vozdrzani = 0;
-
-      Object.values(votesForItem).forEach(function (vote) {
-        if (vote === "za") za++;
-        else if (vote === "protiv") protiv++;
-        else if (vote === "vozdrzan") vozдрзани++;
+    // live табела
+    if (liveResultsTableBody) {
+      liveResultsTableBody.innerHTML = "";
+      agendaItems.forEach((item, i) => {
+        const s = summarizeVotesForItem(i);
+        const tr = document.createElement("tr");
+        const statusText = s.passed ? "УСВОЕНА" : "НЕУСВОЕНА";
+        tr.innerHTML =
+          `<td>${i + 1}. ${item}</td>` +
+          `<td>${s.za}</td>` +
+          `<td>${s.protiv}</td>` +
+          `<td>${s.vozdrzani}</td>` +
+          `<td>${statusText}</td>`;
+        liveResultsTableBody.appendChild(tr);
       });
+    }
 
-      const statusHtml = (za >= MAJORITY_ZA)
-        ? '<span class="status-passed">УСВОЕНА</span>'
-        : '<span class="status-failed">НЕУСВОЕНА</span>';
-
-      const row = document.createElement("tr");
-      row.innerHTML =
-        "<td>" + (index + 1) + ". " + item + "</td>" +
-        "<td>" + za + "</td>" +
-        "<td>" + protiv + "</td>" +
-        "<td>" + vozдrzani + "</td>" +
-        "<td>" + statusHtml + "</td>";
-      liveResultsTableBody.appendChild(row);
-    });
+    saveStateToStorage();
   }
 
-  function fillResultsTable() {
+  // пополнување на финална табела
+  function fillFinalResultsTable() {
     if (!resultsTableBody) return;
-
     resultsTableBody.innerHTML = "";
 
-    agendaItems.forEach(function (itemTitle, index) {
-      const votesForItem = allVotes[index] || {};
-      let za = 0;
-      let protiv = 0;
-      let vozдрзани = 0;
-
-      Object.values(votesForItem).forEach(function (vote) {
-        if (vote === "za") za++;
-        else if (vote === "protiv") protiv++;
-        else if (vote === "vozdrzan") vozдрзани++;
-      });
-
-      const total = za + против + vozдрзани;
-      const statusText = (za >= MAJORITY_ZA) ? "УСВОЕНА" : "НЕУСВОЕНА";
-
-      const row = document.createElement("tr");
-      row.innerHTML =
-        "<td>" + (index + 1) + ". " + itemTitle + "</td>" +
-        "<td>" + total + " / " + COUNCILORS.length + "</td>" +
-        "<td>" + za + "</td>" +
-        "<td>" + против + "</td>" +
-        "<td>" + vozдрзани + "</td>" +
-        "<td>" + statusText + "</td>";
-      resultsTableBody.appendChild(row);
+    agendaItems.forEach((item, i) => {
+      const s = summarizeVotesForItem(i);
+      const statusText = s.passed ? "УСВОЕНА" : "НЕУСВОЕНА";
+      const tr = document.createElement("tr");
+      tr.innerHTML =
+        `<td>${i + 1}. ${item}</td>` +
+        `<td>${s.total} / ${COUNCILORS.length}</td>` +
+        `<td>${s.za}</td>` +
+        `<td>${s.protiv}</td>` +
+        `<td>${s.vozdrzani}</td>` +
+        `<td>${statusText}</td>`;
+      resultsTableBody.appendChild(tr);
     });
   }
 
-  function showCurrentAgendaItem() {
-    if (currentItemIndex < 0 || currentItemIndex >= agendaItems.length) {
-      currentItemIndex = 0;
-    }
+  // ---------------------- MODE ОД URL ----------------------
 
-    currentAgendaTitle.textContent =
-      (currentItemIndex + 1) + ". " + agendaItems[currentItemIndex];
+  const params = new URLSearchParams(window.location.search || "");
+  const mode = params.get("mode");
 
-    currentLoggedCouncilorIndex = null;
-    councilorSelect.value = "";
-    councilorPasswordInput.value = "";
-    loggedCouncilorInfo.textContent = "";
-    voteArea.classList.add("hidden");
+  // секогаш пополни ја листата на советници (ако сме во voting)
+  populateCouncilorsSelect();
 
-    updateCurrentSummary();
-    updateLiveResultsTable();
-    saveState();
-  }
-
-  // ---------- ПОПОЛНИ СОВЕТНИЦИ ----------
-  populateCouncilors();
-
-  // ---------- MODE ОД URL ----------
-  const params = new URLSearchParams(window.location.search);
-  const MODE = params.get("mode");
-
-  if (MODE === "voting") {
-    const ok = loadState();
+  if (mode === "voting") {
+    // режим за советници – само гласање, чита од storage
+    const ok = loadStateFromStorage();
     if (!ok) {
       alert("Во моментот нема активна седница за гласање на овој компјутер.");
-      showAdminOnly();
+      showAdminLogin();
     } else {
       showVoting();
-      showCurrentAgendaItem();
+      updateCurrentPointUI();
     }
   } else {
-    showAdminOnly();
+    // default: admin режим
+    clearStateFromStorage(); // секогаш чисти стара седница кога админот почнува нова
+    showAdminLogin();
   }
 
-  // ---------- АДМИН ЛОГИН ----------
-  adminLoginBtn.addEventListener("click", function () {
-    const entered = adminPasswordInput.value.trim();
-    if (entered === ADMIN_PASSWORD) {
-      adminPasswordInput.value = "";
-      showSetup();
-    } else {
-      alert("Неточна админ шифра.");
-    }
-  });
+  // ---------------------- АДМИН ЛОГИН ----------------------
 
-  // ---------- ВНЕС ПРЕКУ „ЗАПОЧНИ ГЛАСАЊЕ“ ----------
-  startBtn.addEventListener("click", function () {
-    const rawText = agendaInput.value.trim();
-    if (!rawText) {
-      alert("Внеси барем една точка.");
-      return;
-    }
+  if (adminLoginBtn) {
+    adminLoginBtn.addEventListener("click", () => {
+      const val = (adminPasswordInput && adminPasswordInput.value.trim()) || "";
+      if (val === ADMIN_PASSWORD) {
+        if (adminPasswordInput) adminPasswordInput.value = "";
+        showSetup();
+      } else {
+        alert("Неточна админ шифра.");
+      }
+    });
+  }
 
-    agendaItems = rawText
-      .split("\n")
-      .map(line => line.trim())
-      .filter(line => line.length > 0);
+  // ---------------------- ВНЕС НА ТОЧКИ ----------------------
 
-    if (agendaItems.length === 0) {
-      alert("Нема валидни точки.");
-      return;
-    }
+  if (startBtn) {
+    startBtn.addEventListener("click", () => {
+      const raw = (agendaInput && agendaInput.value.trim()) || "";
+      if (!raw) {
+        alert("Внеси барем една точка.");
+        return;
+      }
 
-    allVotes = agendaItems.map(() => ({}));
-    currentItemIndex = 0;
+      const lines = raw
+        .split("\n")
+        .map((line) => line.trim())
+        .filter((line) => line.length > 0);
 
-    saveState();
-    showVoting();
-    showCurrentAgendaItem();
-  });
+      if (!lines.length) {
+        alert("Нема валидни точки.");
+        return;
+      }
 
-  // ---------- НАЈАВА НА СОВЕТНИК ----------
-  councilorLoginBtn.addEventListener("click", function () {
-    const indexStr = councilorSelect.value;
-    const password = councilorPasswordInput.value;
+      agendaItems = lines;
+      votesPerItem = agendaItems.map(() => ({}));
+      currentIndex = 0;
+      loggedCouncilorIndex = null;
 
-    if (!indexStr) {
-      alert("Одбери советник.");
-      return;
-    }
+      saveStateToStorage();
+      showVoting();
+      updateCurrentPointUI();
+    });
+  }
 
-    const idx = parseInt(indexStr, 10);
-    const c = COUNCILORS[idx];
-    if (!c) {
-      alert("Проблем со избор на советник.");
-      return;
-    }
+  // ---------------------- НАЈАВА НА СОВЕТНИК ----------------------
 
-    if (password !== c.password) {
-      alert("Неточна шифра.");
-      return;
-    }
+  if (councilorLoginBtn) {
+    councilorLoginBtn.addEventListener("click", () => {
+      const idxStr = councilorSelect ? councilorSelect.value : "";
+      const pass   = councilorPasswordInput ? councilorPasswordInput.value : "";
 
-    const votesForItem = allVotes[currentItemIndex] || {};
-    if (votesForItem[idx] !== undefined) {
-      alert("Овој советник веќе гласал за оваа точка.");
-      return;
-    }
+      if (!idxStr) {
+        alert("Одбери советник.");
+        return;
+      }
 
-    currentLoggedCouncilorIndex = idx;
-    loggedCouncilorInfo.textContent = "Најавен советник: " + c.name;
-    councilorPasswordInput.value = "";
-    voteArea.classList.remove("hidden");
-  });
+      const idx = parseInt(idxStr, 10);
+      const c = COUNCILORS[idx];
+      if (!c) {
+        alert("Грешка при избор на советник.");
+        return;
+      }
 
-  // ---------- ГЛАСАЊЕ ----------
+      if (pass !== c.password) {
+        alert("Неточна шифра за " + c.name + ".");
+        return;
+      }
+
+      const votesObj = votesPerItem[currentIndex] || {};
+      if (votesObj[idx] !== undefined) {
+        alert("Овој советник веќе гласал за оваа точка.");
+        return;
+      }
+
+      loggedCouncilorIndex = idx;
+      if (loggedCouncilorInfo) {
+        loggedCouncilorInfo.textContent = "Најавен советник: " + c.name;
+      }
+      if (councilorPasswordInput) councilorPasswordInput.value = "";
+      if (voteArea) voteArea.classList.remove("hidden");
+    });
+  }
+
+  // ---------------------- ГЛАСАЊЕ ----------------------
+
   function handleVote(choice) {
-    if (currentLoggedCouncilorIndex === null) {
+    if (loggedCouncilorIndex === null) {
       alert("Прво најави советник.");
       return;
     }
 
-    const idx = currentLoggedCouncilorIndex;
-    const votesForItem = allVotes[currentItemIndex] || {};
-
-    if (votesForItem[idx] !== undefined) {
+    const votesObj = votesPerItem[currentIndex] || {};
+    if (votesObj[loggedCouncilorIndex] !== undefined) {
       alert("Овој советник веќе гласал за оваа точка.");
       return;
     }
 
-    votesForItem[idx] = choice;
-    allVotes[currentItemIndex] = votesForItem;
+    votesObj[loggedCouncilorIndex] = choice;
+    votesPerItem[currentIndex] = votesObj;
 
-    loggedCouncilorInfo.textContent = "Гласот е запишан. Советникот е одјавен.";
-    currentLoggedCouncilorIndex = null;
-    voteArea.classList.add("hidden");
+    if (loggedCouncilorInfo) {
+      loggedCouncilorInfo.textContent = "Гласот е запишан. Советникот е одјавен.";
+    }
+    loggedCouncilorIndex = null;
+    if (voteArea) voteArea.classList.add("hidden");
 
-    updateCurrentSummary();
-    updateLiveResultsTable();
-    saveState();
+    updateCurrentPointUI();
   }
 
-  btnZa.addEventListener("click",       () => handleVote("za"));
-  btnProtiv.addEventListener("click",   () => handleVote("protiv"));
-  btnVozdrzan.addEventListener("click", () => handleVote("vozdrzan"));
+  if (btnZa)       btnZa.addEventListener("click",       () => handleVote("za"));
+  if (btnProtiv)   btnProtiv.addEventListener("click",   () => handleVote("protiv"));
+  if (btnVozdrzan) btnVozdrzan.addEventListener("click", () => handleVote("vozdrzan"));
 
-  // ---------- СЛЕДНА ТОЧКА / КРАЈ ----------
-  nextBtn.addEventListener("click", function () {
-    if (currentItemIndex < agendaItems.length - 1) {
-      currentItemIndex++;
-      showCurrentAgendaItem();
-    } else {
-      showResults();
-      fillResultsTable();
-    }
-  });
+  // ---------------------- СЛЕДНА ТОЧКА / РЕЗУЛТАТИ ----------------------
 
+  if (nextBtn) {
+    nextBtn.addEventListener("click", () => {
+      const sum = summarizeVotesForItem(currentIndex);
+      if (sum.total === 0) {
+        alert("Мора барем еден глас за да преминеш на следна точка.");
+        return;
+      }
+
+      if (currentIndex < agendaItems.length - 1) {
+        currentIndex++;
+        updateCurrentPointUI();
+      } else {
+        showResults();
+        fillFinalResultsTable();
+        // по желба не чистиме storage сега – за да може
+        // повторно да се отвори резултатот од voting link
+      }
+      saveStateToStorage();
+    });
+  }
 });
