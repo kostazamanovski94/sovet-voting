@@ -289,6 +289,9 @@ document.addEventListener("DOMContentLoaded", function () {
     }
 
     agendaItems = rawText
+      localStorage.setItem("agendaItems", JSON.stringify(agendaItems));
+localStorage.setItem("allVotes", JSON.stringify(allVotes));
+
       .split("\n")
       .map(function (line) { return line.trim(); })
       .filter(function (line) { return line.length > 0; });
@@ -349,7 +352,7 @@ document.addEventListener("DOMContentLoaded", function () {
   btnProtiv.addEventListener("click",   function () { handleVote("protiv"); });
   btnVozdrzan.addEventListener("click", function () { handleVote("vozdrzan"); });
 
-  function handleVote(choice) {
+  function handleVote(choice) {localStorage.setItem("allVotes", JSON.stringify(allVotes));
     if (currentLoggedCouncilorIndex === null) {
       alert("Прво најави советник.");
       return;
@@ -390,4 +393,5 @@ document.addEventListener("DOMContentLoaded", function () {
   });
 
 });
+
 
