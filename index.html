@@ -5,104 +5,120 @@
     <title>Систем за гласање на Совет</title>
     <link rel="stylesheet" href="style.css">
 </head>
-
 <body>
 
 <div class="app-container">
 
-    <!-- АДМИН ЛОГИН -->
-    <div id="admin-login-section" class="box">
-        <h2>Систем за гласање на Совет</h2>
-        <h3>Админ најава</h3>
+    <h1>Систем за гласање на Совет</h1>
 
+    <!-- 1. Админ најава -->
+    <section id="admin-login-section" class="box">
+        <h2>Админ најава</h2>
         <p>Внеси админ шифра за да ги внесеш точките од дневен ред.</p>
 
         <input type="password" id="adminPassword" placeholder="Админ шифра">
         <button id="adminLoginBtn">Најави се како админ</button>
 
         <p class="note">
-            *Тест админ шифра: <b>admin123</b><br>
-            *Овој модул се користи за внесување точки.
+            *Тест админ шифра: <strong>admin123</strong><br>
+            *Ако сакаш страната да стартува директно со гласање, користи линк со <code>?mode=voting</code>.
         </p>
-    </div>
+    </section>
 
-    <!-- ВНЕСУВАЊЕ ТОЧКИ -->
-    <div id="setup-section" class="box hidden">
-        <h2>Внес на точки од дневен ред</h2>
-        <textarea id="agendaInput" placeholder="Внеси точки Пр. 1. Буџет 2. Урбанизам"></textarea>
+    <!-- 2. Внесување точки од дневен ред -->
+    <section id="setup-section" class="box hidden">
+        <h2>Внес на точки (дневен ред)</h2>
+        <p>Секоја точка во посебен ред:</p>
+        <textarea id="agendaInput" rows="8"
+                  placeholder="1. Усвојување на записникот&#10;2. Буџет на Општината за 2026 година&#10;3. Програма Г2 – Поттикнување на туризам..."></textarea>
 
         <button id="startBtn">Започни гласање</button>
-    </div>
+    </section>
 
-    <!-- ГЛАСАЊЕ -->
-    <div id="voting-section" class="box hidden">
+    <!-- 3. Гласање по точки -->
+    <section id="voting-section" class="box hidden">
         <h2>Гласање по точки</h2>
 
         <h3 id="currentAgendaTitle"></h3>
 
-        <div>
-            <label>Советник:</label>
+        <!-- Најава на советник -->
+        <div class="login-box">
+            <h3>Најава на советник</h3>
+
+            <label for="councilorSelect">Советник:</label>
             <select id="councilorSelect">
                 <option value="">-- Одбери советник --</option>
             </select>
 
-            <label>Шифра:</label>
-            <input type="password" id="councilorPassword">
+            <label for="councilorPassword">Шифра:</label>
+            <input type="password" id="councilorPassword" placeholder="Шифра">
 
             <button id="councilorLoginBtn">Најави се</button>
+
+            <p id="loggedCouncilorInfo" class="logged-info"></p>
         </div>
 
-        <p id="loggedCouncilorInfo"></p>
-
+        <!-- Копчиња за гласање -->
         <div id="voteArea" class="hidden">
-            <button id="btnZa" class="vote-yes">ЗА</button>
-            <button id="btnProtiv" class="vote-no">ПРОТИВ</button>
-            <button id="btnVozdrzan" class="vote-abstain">ВОЗДРЖАН</button>
+            <h3>Глас за тековната точка</h3>
+            <div class="vote-buttons">
+                <button id="btnZa" class="vote-yes">ЗА</button>
+                <button id="btnProtiv" class="vote-no">ПРОТИВ</button>
+                <button id="btnVozdrzan" class="vote-abstain">ВОЗДРЖАН</button>
+            </div>
         </div>
 
-        <h4>Вкупно гласале: <span id="currentTotalVotes">0</span></h4>
-        <p>За: <span id="currentZa">0</span> | Против: <span id="currentProtiv">0</span> | Воздржани: <span id="currentVozdrzani">0</span></p>
+        <!-- Резиме за тековната точка -->
+        <div class="current-summary">
+            <p><strong>Вкупно гласале:</strong> <span id="currentTotalVotes">0</span> / 15</p>
+            <p>
+                <strong>За:</strong> <span id="currentZa">0</span> |
+                <strong>Против:</strong> <span id="currentProtiv">0</span> |
+                <strong>Воздржани:</strong> <span id="currentVozdrzani">0</span>
+            </p>
+        </div>
+
+        <!-- Жива табела под гласањето -->
+        <div id="liveResultsContainer">
+            <h3>Состојба на гласањето по точки</h3>
+            <table id="liveResultsTable">
+                <thead>
+                <tr>
+                    <th>Точка</th>
+                    <th>За</th>
+                    <th>Против</th>
+                    <th>Воздржани</th>
+                    <th>Статус (≥ 8 „За“)</th>
+                </tr>
+                </thead>
+                <tbody></tbody>
+            </table>
+        </div>
 
         <button id="nextBtn" disabled>Следна точка</button>
+    </section>
 
-        <hr>
+    <!-- 4. Крајни резултати -->
+    <section id="results-section" class="box hidden">
+        <h2>Крајни резултати од гласањето</h2>
 
-        <h3>Состојба по точки</h3>
-        <table id="liveResultsTable">
-            <thead>
-                <tr>
-                    <th>Точка</th>
-                    <th>За</th>
-                    <th>Против</th>
-                    <th>Воздржани</th>
-                    <th>Статус</th>
-                </tr>
-            </thead>
-            <tbody></tbody>
-        </table>
-    </div>
-
-    <!-- КРАЈНИ РЕЗУЛТАТИ -->
-    <div id="results-section" class="box hidden">
-        <h2>Крајни резултати</h2>
         <table id="resultsTable">
             <thead>
-                <tr>
-                    <th>Точка</th>
-                    <th>Гласале</th>
-                    <th>За</th>
-                    <th>Против</th>
-                    <th>Воздржани</th>
-                    <th>Статус</th>
-                </tr>
+            <tr>
+                <th>Точка</th>
+                <th>Гласале</th>
+                <th>За</th>
+                <th>Против</th>
+                <th>Воздржани</th>
+                <th>Статус</th>
+            </tr>
             </thead>
             <tbody></tbody>
         </table>
-    </div>
+    </section>
 
 </div>
 
 <script src="script.js"></script>
-
 </body>
 </html>
