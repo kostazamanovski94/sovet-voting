@@ -115,3 +115,31 @@ button:disabled {
 #resultsTable th {
   background-color: #f0f0f0;
 }
+#liveResultsContainer {
+  margin-top: 30px;
+  padding: 15px;
+  background: rgba(255, 255, 255, 0.85);
+  border-radius: 10px;
+}
+
+#liveResultsTable {
+  width: 100%;
+  border-collapse: collapse;
+  font-size: 15px;
+}
+
+#liveResultsTable th, #liveResultsTable td {
+  border: 1px solid #ccc;
+  padding: 6px;
+  text-align: center;
+}
+
+.status-passed {
+  color: green;
+  font-weight: bold;
+}
+
+.status-failed {
+  color: red;
+  font-weight: bold;
+}
