@@ -19,8 +19,8 @@
       <button id="adminLoginBtn">Најави се како админ</button>
 
       <p class="hint">
-        *За тест: основна админ шифра е <strong>admin123</strong>  
-        (можеш да ја смениш во <code>script.js</code>).
+        *Тест админ шифра: <strong>admin123</strong> (можеш да ја смениш во <code>script.js</code>).<br>
+        *Ако сакаш страната да стартува директно со гласање, користи линк со <code>?mode=voting</code>.
       </p>
     </section>
 
@@ -29,7 +29,7 @@
       <h2>Внес на точки (дневен ред)</h2>
       <p>Внеси ги точките, секоја во посебен ред:</p>
 
-      <textarea id="agendaInput" rows="7"></textarea>
+      <textarea id="agendaInput" rows="7" placeholder="1. Усвојување на записник&#10;2. Буџет за 2026 година&#10;3. Програма Г2 – Поттикнување на туризмот..."></textarea>
 
       <button id="startBtn">Започни гласање</button>
     </section>
@@ -40,6 +40,7 @@
 
       <div id="currentAgendaTitle" class="agenda-title"></div>
 
+      <!-- Логирање на советник -->
       <div class="login-box">
         <h3>Најава на советник</h3>
 
@@ -56,6 +57,7 @@
         <p id="loggedCouncilorInfo" class="logged-info"></p>
       </div>
 
+      <!-- Копчиња за гласање -->
       <div id="voteArea" class="hidden">
         <h3>Глас за тековната точка</h3>
         <div class="vote-buttons single">
@@ -65,24 +67,8 @@
         </div>
       </div>
 
+      <!-- Резиме за тековната точка -->
       <div class="current-summary">
-<!-- ЖИВА ТАБЕЛА СО РЕЗУЛТАТИ ПО ТОЧКИ -->
-<div id="liveResultsContainer">
-  <h3>Состојба на гласање по точки</h3>
-  <table id="liveResultsTable">
-    <thead>
-      <tr>
-        <th>Точка</th>
-        <th>За</th>
-        <th>Против</th>
-        <th>Воздржани</th>
-        <th>Статус</th>
-      </tr>
-    </thead>
-    <tbody></tbody>
-  </table>
-</div>
-
         <p><strong>Вкупно гласале:</strong> <span id="currentTotalVotes">0</span> / 15</p>
         <p>
           <strong>За:</strong> <span id="currentZa">0</span> |
@@ -91,12 +77,29 @@
         </p>
       </div>
 
+      <!-- ЖИВА ТАБЕЛА СО РЕЗУЛТАТИ ПО ТОЧКИ -->
+      <div id="liveResultsContainer">
+        <h3>Состојба на гласање по точки</h3>
+        <table id="liveResultsTable">
+          <thead>
+            <tr>
+              <th>Точка</th>
+              <th>За</th>
+              <th>Против</th>
+              <th>Воздржани</th>
+              <th>Статус (≥ 8 „За“)</th>
+            </tr>
+          </thead>
+          <tbody></tbody>
+        </table>
+      </div>
+
       <button id="nextBtn" disabled>Следна точка</button>
     </section>
 
     <!-- 4. РЕЗУЛТАТИ -->
     <section id="results-section" class="hidden">
-      <h2>Резултати од гласањето</h2>
+      <h2>Крајни резултати од гласањето</h2>
 
       <table id="resultsTable">
         <thead>
@@ -106,6 +109,7 @@
             <th>За</th>
             <th>Против</th>
             <th>Воздржани</th>
+            <th>Статус</th>
           </tr>
         </thead>
         <tbody></tbody>
@@ -114,7 +118,8 @@
 
   </div>
 
-  <!-- ОБАВЕЗНО! -->
+  <!-- ВАЖНО: ЛИНК ДО SCRIPT.JS -->
   <script src="script.js"></script>
 </body>
 </html>
+
