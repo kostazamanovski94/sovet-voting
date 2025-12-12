@@ -14,21 +14,21 @@ const ADMIN_PASSWORD = "admin123";
 
 // 15 советници, секој со своја шифра
 const COUNCILORS = [
-  { name: "Советник 1", password: "1111" },
-  { name: "Советник 2", password: "2222" },
-  { name: "Советник 3", password: "3333" },
-  { name: "Советник 4", password: "4444" },
-  { name: "Советник 5", password: "5555" },
-  { name: "Советник 6", password: "6666" },
-  { name: "Советник 7", password: "7777" },
-  { name: "Советник 8", password: "8888" },
-  { name: "Советник 9", password: "9999" },
-  { name: "Советник 10", password: "1010" },
-  { name: "Советник 11", password: "1110" },
-  { name: "Советник 12", password: "1212" },
-  { name: "Советник 13", password: "1313" },
-  { name: "Советник 14", password: "1414" },
-  { name: "Советник 15", password: "1515" }
+  { name: "КОСТА ЗАМАНОВСКИ", password: "1111" },
+  { name: "НИКОЛА ИСТОЧКИ", password: "2222" },
+  { name: "МАЈА ПАВЛОВСКА", password: "3333" },
+  { name: "ЗОРАН ИЛИЕВСКИ", password: "4444" },
+  { name: "ВЛАДО БОРЕВСКИ", password: "5555" },
+  { name: "ЖАНЕТА САВЕВСКА", password: "6666" },
+  { name: "ЈОВАНЧО ЛАЗАРОВСКИ", password: "7777" },
+  { name: "ЕЛПИНИКИ НИКОЛОВСКА", password: "8888" },
+  { name: "ЛЕНЧЕ НЕЧОВСКИ", password: "9999" },
+  { name: "БОРЧЕ РИСТЕВСКИ", password: "1010" },
+  { name: "ЈУЛИЈАНА ШУМИНОВСКА", password: "1110" },
+  { name: "БЕЛКАС МУСТАФА", password: "1212" },
+  { name: "АЈЃИН АБИШЕВСКИ", password: "1313" },
+  { name: "АРИЈАН МУЈЕДИНИ", password: "1414" },
+  { name: "БЛЕРИМ БЕСИМИ", password: "1515" }
 ];
 
 // минимум 8 „ЗА“ за да биде усвоена точка
