@@ -177,17 +177,17 @@ document.addEventListener("DOMContentLoaded", () => {
   }
 
   // ---------------------- ЛИНК ЗА СОВЕТНИЦИ ----------------------
+// ---------------------- ЛИНК ЗА СОВЕТНИЦИ ----------------------
 
 function updateShareLink() {
   if (!shareLinkBlock || !shareLinkInput) return;
 
-  // не го покажуваме кај советниците
+  // кај советници не го прикажуваме
   if (mode === "voting") {
     shareLinkBlock.classList.add("hidden");
     return;
   }
 
-  // ако нема точки - нема линк
   if (!agendaItems.length) {
     shareLinkBlock.classList.add("hidden");
     return;
@@ -205,18 +205,17 @@ function updateShareLink() {
 if (copyLinkBtn) {
   copyLinkBtn.addEventListener("click", () => {
     if (!shareLinkInput || !shareLinkInput.value) return;
+
     const text = shareLinkInput.value;
 
-    if (navigator.clipboard && navigator.clipboard.writeText) {
+    if (navigator.clipboard?.writeText) {
       navigator.clipboard.writeText(text)
-        .then(
-          () => alert("Линкот е копиран. Пастирај го во порака."),
-          () => alert("Не можам автоматски да копирам. Обиди се со Ctrl+C.")
-        );
+        .then(() => alert("Линкот е копиран."))
+        .catch(() => alert("Копирај рачно (Ctrl+C)."));
     } else {
       shareLinkInput.select();
       document.execCommand("copy");
-      alert("Линкот е копиран. Пастирај (Ctrl+V) во порака.");
+      alert("Линкот е копиран.");
     }
   });
 }
