@@ -43,6 +43,45 @@ let currentLoggedCouncilorIndex = null;
 // =======================
 
 document.addEventListener("DOMContentLoaded", function () {
+  // -------------------------------
+  // DETECT MODE FROM URL
+  // ?mode=admin  → отвора админ
+  // ?mode=voting → директно гласање
+  // -------------------------------
+  const urlParams = new URLSearchParams(window.location.search);
+  const MODE = urlParams.get("mode");
+
+  if (MODE === "voting") {
+      // ако нема точки внесено → не можеме да гласаат
+      const savedAgenda = localStorage.getItem("agendaItems");
+      const savedVotes = localStorage.getItem("allVotes");
+
+      if (!savedAgenda) {
+          alert("Во моментот нема активна седница за гласање.");
+          return;
+      }
+
+      // зачувани точки
+      agendaItems = JSON.parse(savedAgenda);
+      allVotes = JSON.parse(savedVotes) || agendaItems.map(()=> ({}));
+      currentItemIndex = 0;
+
+      // скриј админ
+      adminLoginSection.classList.add("hidden");
+      setupSection.classList.add("hidden");
+
+      // покажи гласање
+      votingSection.classList.remove("hidden");
+      resultsSection.classList.add("hidden");
+
+      showCurrentAgendaItem();
+      return;  // важно!
+  }
+
+  if (MODE === "admin") {
+      showOnlyAdmin();
+      return;
+  }
 
   // ---------- DOM елементи ----------
 
@@ -351,3 +390,4 @@ document.addEventListener("DOMContentLoaded", function () {
   });
 
 });
+
