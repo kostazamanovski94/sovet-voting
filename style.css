@@ -1,145 +1,163 @@
-/* Позадина со грб на општина */
+/* Позадина со грб на општината */
 body {
-  margin: 0;
-  padding: 0;
-  min-height: 100vh;
-  font-family: Arial, sans-serif;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  background-image: url("grb-opshtina.png"); /* промени име ако е друго */
-  background-size: cover;
-  background-position: center;
-  background-repeat: no-repeat;
+    margin: 0;
+    padding: 0;
+    min-height: 100vh;
+    font-family: Arial, sans-serif;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    background-image: url("grb-opshtina.png"); /* ако сликата има друго име, смени тука */
+    background-size: cover;
+    background-position: center;
+    background-repeat: no-repeat;
 }
 
-/* Централен модул */
+/* Централна бела кутија */
 .app-container {
-  background-color: rgba(255, 255, 255, 0.93);
-  padding: 20px 30px;
-  border-radius: 12px;
-  max-width: 900px;
-  width: 95%;
-  box-shadow: 0 4px 20px rgba(0, 0, 0, 0.2);
+    background-color: rgba(255, 255, 255, 0.95);
+    padding: 20px 30px;
+    border-radius: 15px;
+    max-width: 950px;
+    width: 95%;
+    box-shadow: 0 4px 18px rgba(0, 0, 0, 0.25);
 }
 
-h1, h2, h3 {
-  text-align: center;
-  margin-top: 0;
+h1 {
+    text-align: center;
+    margin-top: 0;
+    margin-bottom: 15px;
+}
+
+h2, h3 {
+    text-align: center;
+    margin-top: 0;
+}
+
+.box {
+    margin-bottom: 20px;
 }
 
 textarea, input, select {
-  width: 100%;
-  padding: 8px;
-  box-sizing: border-box;
-  margin-top: 5px;
-  margin-bottom: 10px;
+    width: 100%;
+    box-sizing: border-box;
+    padding: 8px;
+    margin: 5px 0 10px 0;
+    font-size: 14px;
 }
 
 button {
-  padding: 8px 16px;
-  font-size: 16px;
-  cursor: pointer;
-  border-radius: 6px;
-  border: none;
+    padding: 8px 14px;
+    font-size: 14px;
+    border-radius: 6px;
+    border: none;
+    cursor: pointer;
+    background-color: #e0e0e0;
+}
+
+button:hover:not(:disabled) {
+    background-color: #d0d0d0;
 }
 
 button:disabled {
-  opacity: 0.5;
-  cursor: not-allowed;
+    opacity: 0.5;
+    cursor: not-allowed;
 }
 
 .hidden {
-  display: none;
+    display: none;
 }
 
-.hint {
-  font-size: 13px;
-  color: #555;
-  text-align: left;
+.note {
+    font-size: 13px;
+    color: #555;
 }
 
-/* Точки */
-.agenda-title {
-  font-size: 18px;
-  font-weight: bold;
-  margin: 10px 0 15px 0;
-  text-align: center;
-}
-
-/* Кутија за логирање на советник */
+/* Логирање на советник */
 .login-box {
-  border: 1px solid #ccc;
-  border-radius: 10px;
-  padding: 12px 15px;
-  background-color: #f9f9f9;
-  margin-bottom: 15px;
+    border: 1px solid #ccc;
+    border-radius: 10px;
+    padding: 10px 14px;
+    background-color: #f9f9f9;
+    margin-bottom: 15px;
 }
 
 .logged-info {
-  margin-top: 5px;
-  font-size: 14px;
-  color: #006600;
+    font-size: 14px;
+    color: #006600;
 }
 
 /* Копчиња за гласање */
-.vote-buttons.single {
-  display: flex;
-  justify-content: center;
-  gap: 10px;
+.vote-buttons {
+    display: flex;
+    justify-content: center;
+    gap: 10px;
+    margin-bottom: 10px;
 }
 
-.vote-buttons.single button {
-  min-width: 100px;
+.vote-yes {
+    background-color: #c8e6c9;
+}
+
+.vote-no {
+    background-color: #ffcdd2;
+}
+
+.vote-abstain {
+    background-color: #fff9c4;
 }
 
 /* Резиме за тековна точка */
 .current-summary {
-  margin-top: 10px;
-  text-align: center;
+    text-align: center;
+    margin-top: 10px;
 }
 
-/* Табела за конечни резултати */
+/* Жива табела */
+#liveResultsContainer {
+    margin-top: 20px;
+    padding: 10px;
+    background-color: rgba(255, 255, 255, 0.9);
+    border-radius: 10px;
+}
+
+#liveResultsTable {
+    width: 100%;
+    border-collapse: collapse;
+    font-size: 14px;
+}
+
+#liveResultsTable th,
+#liveResultsTable td {
+    border: 1px solid #ccc;
+    padding: 5px 6px;
+    text-align: center;
+}
+
+.status-passed {
+    color: green;
+    font-weight: bold;
+}
+
+.status-failed {
+    color: red;
+    font-weight: bold;
+}
+
+/* Крајна табела */
 #resultsTable {
-  width: 100%;
-  border-collapse: collapse;
+    width: 100%;
+    border-collapse: collapse;
+    font-size: 14px;
 }
 
 #resultsTable th,
 #resultsTable td {
-  border: 1px solid #ccc;
-  padding: 6px 8px;
-  text-align: center;
+    border: 1px solid #ccc;
+    padding: 6px 8px;
+    text-align: center;
 }
 
 #resultsTable th {
-  background-color: #f0f0f0;
-}
-#liveResultsContainer {
-  margin-top: 30px;
-  padding: 15px;
-  background: rgba(255, 255, 255, 0.85);
-  border-radius: 10px;
-}
-
-#liveResultsTable {
-  width: 100%;
-  border-collapse: collapse;
-  font-size: 15px;
-}
-
-#liveResultsTable th, #liveResultsTable td {
-  border: 1px solid #ccc;
-  padding: 6px;
-  text-align: center;
-}
-
-.status-passed {
-  color: green;
-  font-weight: bold;
-}
-
-.status-failed {
-  color: red;
-  font-weight: bold;
+    background-color: #f0f0f0;
 }
