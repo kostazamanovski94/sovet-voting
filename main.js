@@ -2,17 +2,17 @@
 
 /*
   СИСТЕМ ЗА ГЛАСАЊЕ НА СОВЕТ
-  - Админ логин (mode=admin)
+
+  - Админ логин (?mode=admin)
   - Внес на точки
-  - Гласање со 15 советници (име + шифра)
-  - Втор линк за советници: ?mode=voting (чита од localStorage)
+  - Линк за советници: ?mode=voting&agenda=...
+  - 15 советници (име + шифра)
 */
 
 // ---------------------- КОНФИГУРАЦИЈА ----------------------
 
 const ADMIN_PASSWORD = "admin123";
 
-// 15 советници, секој со своја шифра
 const COUNCILORS = [
   { name: "КОСТА ЗАМАНОВСКИ", password: "1111" },
   { name: "НИКОЛА ИСТОЧКИ", password: "2222" },
@@ -31,23 +31,12 @@ const COUNCILORS = [
   { name: "БЛЕРИМ БЕСИМИ", password: "1515" }
 ];
 
-// минимум 8 „ЗА“ за да биде усвоена точка
 const MAJORITY_ZA = 8;
-
-// localStorage клуч
 const STORAGE_KEY = "sovet_voting_state_v1";
 
-// структура што ја чуваме во storage:
-// {
-//   agendaItems: [ "т1", "т2", ... ],
-//   votes: [ { "0":"za", "3":"protiv" }, ... ],
-//   currentIndex: 0
-// }
-
-// ---------------------- ГЛОБАЛНА СОСТОЈБА ----------------------
-
+// Состојба:
 let agendaItems = [];
-let votesPerItem = [];      // масив: за секоја точка -> објект { индексНаСоветник: "za/protiv/vozdrzan" }
+let votesPerItem = [];
 let currentIndex = 0;
 let loggedCouncilorIndex = null;
 
@@ -78,7 +67,6 @@ function loadStateFromStorage() {
     votesPerItem = state.votes;
     currentIndex = typeof state.currentIndex === "number" ? state.currentIndex : 0;
 
-    // безбедност
     if (currentIndex < 0 || currentIndex >= agendaItems.length) {
       currentIndex = 0;
     }
@@ -97,7 +85,6 @@ function clearStateFromStorage() {
   }
 }
 
-// броење гласови за одредена точка
 function summarizeVotesForItem(index) {
   const votesObj = votesPerItem[index] || {};
   let za = 0;
@@ -116,11 +103,10 @@ function summarizeVotesForItem(index) {
   return { za, protiv, vozdrzani, total, passed };
 }
 
-// ---------------------- MAIN ----------------------
+// ---------------------- DOMContentLoaded ----------------------
 
 document.addEventListener("DOMContentLoaded", () => {
-  // ---- HTML елементи ----
-
+  // HTML елементи
   const adminLoginSection = document.getElementById("admin-login-section");
   const setupSection      = document.getElementById("setup-section");
   const votingSection     = document.getElementById("voting-section");
@@ -153,7 +139,16 @@ document.addEventListener("DOMContentLoaded", () => {
   const liveResultsTableBody = document.querySelector("#liveResultsTable tbody");
   const resultsTableBody     = document.querySelector("#resultsTable tbody");
 
-  // ---- функции за прикажување секции ----
+  // новите за линкот
+  const shareLinkBlock = document.getElementById("shareLinkBlock");
+  const shareLinkInput = document.getElementById("shareLinkInput");
+  const copyLinkBtn    = document.getElementById("copyLinkBtn");
+
+  // URL параметри
+  const params = new URLSearchParams(window.location.search || "");
+  const mode = params.get("mode");
+
+  // ---------------------- UI СЕКЦИИ ----------------------
 
   function hideAllSections() {
     [adminLoginSection, setupSection, votingSection, resultsSection].forEach((sec) => {
@@ -181,11 +176,51 @@ document.addEventListener("DOMContentLoaded", () => {
     if (resultsSection) resultsSection.classList.remove("hidden");
   }
 
-  // ---- пополнување на листата на советници ----
+  // ---------------------- ЛИНК ЗА СОВЕТНИЦИ ----------------------
+
+  function updateShareLink() {
+    if (!shareLinkBlock || !shareLinkInput) return;
+
+    // не го покажуваме кај советниците
+    if (mode === "voting") {
+      shareLinkBlock.classList.add("hidden");
+      return;
+    }
+
+    if (!agendaItems.length) {
+      shareLinkBlock.classList.add("hidden");
+      return;
+    }
+
+    const base = window.location.origin + window.location.pathname;
+    const encodedAgenda = encodeURIComponent(JSON.stringify(agendaItems));
+    const link = `${base}?mode=voting&agenda=${encodedAgenda}`;
+
+    shareLinkInput.value = link;
+    shareLinkBlock.classList.remove("hidden");
+  }
+
+  if (copyLinkBtn) {
+    copyLinkBtn.addEventListener("click", () => {
+      if (!shareLinkInput || !shareLinkInput.value) return;
+      const text = shareLinkInput.value;
+
+      if (navigator.clipboard && navigator.clipboard.writeText) {
+        navigator.clipboard.writeText(text)
+          .then(() => alert("Линкот е копиран. Пастирај го во порака."),
+                () => alert("Не можам автоматски да копирам. Обиди се со Ctrl+C."));
+      } else {
+        shareLinkInput.select();
+        document.execCommand("copy");
+        alert("Линкот е копиран. Пастирај (Ctrl+V) во порака.");
+      }
+    });
+  }
+
+  // ---------------------- ПОПОЛНУВАЊЕ НА СОВЕТНИЦИ ----------------------
 
   function populateCouncilorsSelect() {
     if (!councilorSelect) return;
-    // прво избриши евентуални стари опции (освен првата празна)
     while (councilorSelect.options.length > 1) {
       councilorSelect.remove(1);
     }
@@ -197,7 +232,7 @@ document.addEventListener("DOMContentLoaded", () => {
     });
   }
 
-  // ---- ажурирање на UI за тековна точка ----
+  // ---------------------- UI ЗА ТЕКОВНА ТОЧКА ----------------------
 
   function updateCurrentPointUI() {
     if (!agendaItems.length) return;
@@ -206,14 +241,12 @@ document.addEventListener("DOMContentLoaded", () => {
       currentAgendaTitle.textContent = (currentIndex + 1) + ". " + title;
     }
 
-    // ресет на login на советник
     loggedCouncilorIndex = null;
     if (councilorSelect) councilorSelect.value = "";
     if (councilorPasswordInput) councilorPasswordInput.value = "";
     if (loggedCouncilorInfo) loggedCouncilorInfo.textContent = "";
     if (voteArea) voteArea.classList.add("hidden");
 
-    // статистика за тековната точка
     const sum = summarizeVotesForItem(currentIndex);
     if (currentZaSpan) currentZaSpan.textContent = String(sum.za);
     if (currentProtivSpan) currentProtivSpan.textContent = String(sum.protiv);
@@ -222,7 +255,6 @@ document.addEventListener("DOMContentLoaded", () => {
 
     if (nextBtn) nextBtn.disabled = sum.total === 0;
 
-    // live табела
     if (liveResultsTableBody) {
       liveResultsTableBody.innerHTML = "";
       agendaItems.forEach((item, i) => {
@@ -242,7 +274,6 @@ document.addEventListener("DOMContentLoaded", () => {
     saveStateToStorage();
   }
 
-  // пополнување на финална табела
   function fillFinalResultsTable() {
     if (!resultsTableBody) return;
     resultsTableBody.innerHTML = "";
@@ -262,17 +293,32 @@ document.addEventListener("DOMContentLoaded", () => {
     });
   }
 
-  // ---------------------- MODE ОД URL ----------------------
+  // ---------------------- INIT ОД URL AGENDA ----------------------
 
-  const params = new URLSearchParams(window.location.search || "");
-  const mode = params.get("mode");
+  function initFromAgendaParam() {
+    const agParam = params.get("agenda");
+    if (!agParam) return false;
+    try {
+      const arr = JSON.parse(decodeURIComponent(agParam));
+      if (!Array.isArray(arr) || !arr.length) return false;
+      agendaItems = arr;
+      votesPerItem = agendaItems.map(() => ({}));
+      currentIndex = 0;
+      saveStateToStorage();
+      return true;
+    } catch (e) {
+      console.error("Грешка при читање agenda од URL:", e);
+      return false;
+    }
+  }
 
-  // секогаш пополни ја листата на советници (ако сме во voting)
+  // ---------------------- СТАРТ НА РЕЖИМИ ----------------------
+
   populateCouncilorsSelect();
 
   if (mode === "voting") {
-    // режим за советници – само гласање, чита од storage
-    const ok = loadStateFromStorage();
+    let ok = loadStateFromStorage();
+    if (!ok) ok = initFromAgendaParam();
     if (!ok) {
       alert("Во моментот нема активна седница за гласање на овој компјутер.");
       showAdminLogin();
@@ -281,8 +327,7 @@ document.addEventListener("DOMContentLoaded", () => {
       updateCurrentPointUI();
     }
   } else {
-    // default: admin режим
-    clearStateFromStorage(); // секогаш чисти стара седница кога админот почнува нова
+    clearStateFromStorage();
     showAdminLogin();
   }
 
@@ -327,11 +372,12 @@ document.addEventListener("DOMContentLoaded", () => {
 
       saveStateToStorage();
       showVoting();
+      updateShareLink();   // овде го правиме линкот
       updateCurrentPointUI();
     });
   }
 
-  // ---------------------- НАЈАВА НА СОВЕТНИК ----------------------
+  // ---------------------- ЛОГИН НА СОВЕТНИК ----------------------
 
   if (councilorLoginBtn) {
     councilorLoginBtn.addEventListener("click", () => {
@@ -416,8 +462,6 @@ document.addEventListener("DOMContentLoaded", () => {
       } else {
         showResults();
         fillFinalResultsTable();
-        // по желба не чистиме storage сега – за да може
-        // повторно да се отвори резултатот од voting link
       }
       saveStateToStorage();
     });
