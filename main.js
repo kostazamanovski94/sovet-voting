@@ -187,6 +187,7 @@ function updateShareLink() {
     return;
   }
 
+  // ако нема точки - нема линк
   if (!agendaItems.length) {
     shareLinkBlock.classList.add("hidden");
     return;
@@ -201,36 +202,24 @@ function updateShareLink() {
   shareLinkBlock.classList.remove("hidden");
 }
 
+if (copyLinkBtn) {
+  copyLinkBtn.addEventListener("click", () => {
+    if (!shareLinkInput || !shareLinkInput.value) return;
+    const text = shareLinkInput.value;
 
-    if (!agendaItems.length) {
-      shareLinkBlock.classList.add("hidden");
-      return;
+    if (navigator.clipboard && navigator.clipboard.writeText) {
+      navigator.clipboard.writeText(text)
+        .then(
+          () => alert("Линкот е копиран. Пастирај го во порака."),
+          () => alert("Не можам автоматски да копирам. Обиди се со Ctrl+C.")
+        );
+    } else {
+      shareLinkInput.select();
+      document.execCommand("copy");
+      alert("Линкот е копиран. Пастирај (Ctrl+V) во порака.");
     }
-
-    const base = window.location.origin + window.location.pathname;
-    const encodedAgenda = encodeURIComponent(JSON.stringify(agendaItems));
-    const link = `${base}?mode=voting&agenda=${encodedAgenda}`;
-
-    shareLinkInput.value = link;
-    shareLinkBlock.classList.remove("hidden");
-  }
-
-  if (copyLinkBtn) {
-    copyLinkBtn.addEventListener("click", () => {
-      if (!shareLinkInput || !shareLinkInput.value) return;
-      const text = shareLinkInput.value;
-
-      if (navigator.clipboard && navigator.clipboard.writeText) {
-        navigator.clipboard.writeText(text)
-          .then(() => alert("Линкот е копиран. Пастирај го во порака."),
-                () => alert("Не можам автоматски да копирам. Обиди се со Ctrl+C."));
-      } else {
-        shareLinkInput.select();
-        document.execCommand("copy");
-        alert("Линкот е копиран. Пастирај (Ctrl+V) во порака.");
-      }
-    });
-  }
+  });
+}
 
   // ---------------------- ПОПОЛНУВАЊЕ НА СОВЕТНИЦИ ----------------------
 
