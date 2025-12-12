@@ -6,21 +6,21 @@ const ADMIN_PASSWORD = "admin123";
 // Листа на 15 советници со имиња и шифри
 // Можеш да ги смениш имињата и шифрите по желба.
 const councilors = [
-  { name: "КОСТА ЗАМАНОВСКИ", password: "1111" },
-  { name: "НИКОЛА ИСТОЧКИ", password: "2222" },
-  { name: "МАЈА ПАВЛОВСКА", password: "3333" },
-  { name: "ЗОРАН ИЛИЕВСКИ", password: "4444" },
-  { name: "ВЛАДО БОРЕВСКИ", password: "5555" },
-  { name: "ЖАНЕТА САВЕВСКА", password: "6666" },
-  { name: "ЈОВАНЧО ЛАЗАРОВСКИ", password: "7777" },
-  { name: "ЕЛПИНИКИ НИКОЛОВСКА", password: "8888" },
-  { name: "ЛЕНЧЕ НЕЧОВСКИ", password: "9999" },
-  { name: "БОРЧЕ РИСТЕВСКИ", password: "1010" },
-  { name: "ЈУЛИЈАНА ШУМИНОВСКА", password: "1110" },
-  { name: "БЕЛКАС МУСТАФА", password: "1212" },
-  { name: "АЈЃИН АБИШЕВСКИ", password: "1313" },
-  { name: "АРИЈАН МУЈЕДИНИ", password: "1414" },
-  { name: "БЛЕРИМ БЕСИМИ", password: "1515" }
+  { name: "КОСТА ЗАМАНОВСКИ", password: "kosta1" },
+  { name: "НИКОЛА ИСТОЧКИ", password: "nikola1" },
+  { name: "МАЈА ПАВЛОВСКА", password: "maja1" },
+  { name: "ЗОРАН ИЛИЕВСКИ", password: "zoran1" },
+  { name: "ВЛАДО БОРЕВСКИ", password: "vlado1" },
+  { name: "ЖАНЕТА САВЕВСКА", password: "zaneta1" },
+  { name: "ЈОВАНЧО ЛАЗАРОВСКИ", password: "jovanco1" },
+  { name: "ЕЛПИНИКИ НИКОЛОВСКА", password: "elpiniki1" },
+  { name: "ЛЕНЧЕ НЕЧОВСКИ", password: "lence1" },
+  { name: "БОРЧЕ РИСТЕВСКИ", password: "borce1" },
+  { name: "ЈУЛИЈАНА ШУМИНОВСКА", password: "julijana1" },
+  { name: "БЕЛКАС МУСТАФА", password: "belkas1" },
+  { name: "АЈЃИН АБИШЕВСКИ", password: "ajgin1" },
+  { name: "АРИЈАН МУЈЕДИНИ", password: "arijan1" },
+  { name: "БЛЕРИМ БЕСИМИ", password: "blerim1" }
 ];
 
 // === СОСТОЈБА НА АПЛИКАЦИЈАТА ===
@@ -204,6 +204,45 @@ function handleVote(choice) {
   voteArea.classList.add("hidden");
 
   updateCurrentSummary();
+}
+updateLiveResultsTable();
+
+function updateLiveResultsTable() {
+  const tbody = document.querySelector("#liveResultsTable tbody");
+  tbody.innerHTML = "";
+
+  agendaItems.forEach((item, index) => {
+    let za = 0, protiv = 0, vozdrzani = 0;
+
+    const votes = allVotes[index];
+    Object.values(votes).forEach(vote => {
+      if (vote === "za") za++;
+      else if (vote === "protiv") protiv++;
+      else if (vote === "vozdrzan") vozdrzani++;
+    });
+
+    const totalZa = za;
+
+    // Проверка на мнозинство
+    let status = "";
+    if (totalZa >= 8) {
+      status = `<span class="status-passed">УСВОЕНА</span>`;
+    } else {
+      status = `<span class="status-failed">НЕУСВОЕНА</span>`;
+    }
+
+    const row = document.createElement("tr");
+
+    row.innerHTML = `
+      <td>${index + 1}. ${item}</td>
+      <td>${za}</td>
+      <td>${protiv}</td>
+      <td>${vozdrzani}</td>
+      <td>${status}</td>
+    `;
+
+    tbody.appendChild(row);
+  });
 }
 
 // === АЖУРИРАЊЕ НА БРОЈАЧИ ЗА ТЕКОВНА ТОЧКА ===
