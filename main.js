@@ -178,14 +178,29 @@ document.addEventListener("DOMContentLoaded", () => {
 
   // ---------------------- ЛИНК ЗА СОВЕТНИЦИ ----------------------
 
-  function updateShareLink() {
-    if (!shareLinkBlock || !shareLinkInput) return;
+function updateShareLink() {
+  if (!shareLinkBlock || !shareLinkInput) return;
 
-    // не го покажуваме кај советниците
-    if (mode === "voting") {
-      shareLinkBlock.classList.add("hidden");
-      return;
-    }
+  // не го покажуваме кај советниците
+  if (mode === "voting") {
+    shareLinkBlock.classList.add("hidden");
+    return;
+  }
+
+  if (!agendaItems.length) {
+    shareLinkBlock.classList.add("hidden");
+    return;
+  }
+
+  const base = window.location.origin + window.location.pathname;
+
+  // ✅ КРАТОК ЛИНК (без agenda во URL)
+  const link = `${base}?mode=voting`;
+
+  shareLinkInput.value = link;
+  shareLinkBlock.classList.remove("hidden");
+}
+
 
     if (!agendaItems.length) {
       shareLinkBlock.classList.add("hidden");
